@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}
+  {% block head_title %}
+    PortFolio
+  {% endblock head_title %}
+{% endblock title %}
+
+{% block content %}
+<div class="row">
+  <div class="col">
+    <a class="btn btn-primary" href="{% url "portfolio:portfolio_create" %}" role="button">Create Portfolio</a>
+  </div>
+</div>
+<div class="row">
+  <table class="table">
+  <thead>
+    <tr>
+      <th scope="col">Name</th>
+      <th scope="col">User</th>
+    </tr>
+  </thead>
+  <tbody>
+
+      {% for portfolio in portfolio_list %}
+        <tr>
+          <td>
+            <a href="{% url "portfolio:portfolio_value_view" portfolio.id %}">{{ portfolio.name }}</a>
+          </td>
+          <td>{{ portfolio.user }}</td>
+          <td>
+            <a class="btn btn-primary" href="{% url "portfolio:portfolio_update" portfolio.id %}" role="button">Update</a>
+          </td>
+        </tr>
+      {% endfor %}
+
+  </tbody>
+</table>
+</div>
+{% endblock %}

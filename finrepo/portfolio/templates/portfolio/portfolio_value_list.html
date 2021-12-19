@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}
+  {% block head_title %}
+    PortFolio
+  {% endblock head_title %}
+{% endblock title %}
+
+{% block content %}
+<div class="row">
+  <div class="col">
+    <a class="btn btn-primary" href="{% url "portfolio:portfolio_value_create" %}" role="button">Create Valor Portfolio</a>
+  </div>
+</div>
+<div class="row">
+  <div class="col">
+   <canvas id="grow"></canvas>
+  </div>
+  <div class="col">
+   <canvas id="gains"></canvas>
+  </div>
+</div>
+<div class="row">
+  <table class="table">
+  <thead>
+    <tr>
+      <th scope="col">PortFolio</th>
+      <th scope="col">Balance</th>
+      <th scope="col">Added</th>
+      <th scope="col">Add to</th>
+      <th scope="col">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for portfolio_value in portfolio_value_list %}
+    <tr>
+
+        <td>
+          {{ portfolio_value.portfolio.name }}
+        </td>
+        <td>{{ portfolio_value.balance }}</td>
+        <td>{{ portfolio_value.added }}</td>
+        <td>{{ portfolio_value.date_added }}</td>
+        <td>
+          <a class="btn btn-primary" href="{% url "portfolio:portfolio_value_update" portfolio_value.id %}" role="button">Update</a>
+        </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock content %}
+{% block inline_javascript %}
+  {{ portfolio_value_list_json|json_script:"portfolio_value" }}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.6.2/chart.min.js" integrity="sha512-tMabqarPtykgDtdtSqCL3uLVM0gS1ZkUAVhRFu1vSEFgvB73niFQWJuvviDyBGBH22Lcau4rHB5p2K2T0Xvr6Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const ctx_grow = document.getElementById('grow').getContext('2d')
+      const ctx_gains = document.getElementById('gains').getContext('2d')
+      const data = JSON.parse(document.getElementById("portfolio_value").textContent)
+      data.reverse()
+      const labels = []
+      const data_balance = [{
+        label: 'Balance',
+        data: [],
+      },{
+        label: 'Balance Without Added',
+        data: [],
+      }]
+      const data_gains = [{
+        label: 'Actual vs Before',
+        data: [],
+      },{
+        label: 'Actual vs Initial',
+        data: [],
+      }]
+      let accumulator = 0
+      data.forEach((item, index)=>{
+        labels.push(item.date_added)
+        const balance = item.balance
+        const balance_without_added = item.balance - item.added
+        const win = balance_without_added - parseFloat(index>0?data[index-1].balance:item.balance)
+        const win_2 = balance_without_added - parseFloat(data[0].balance) - parseFloat(accumulator)
+        accumulator += parseFloat(item.added)
+        console.log(accumulator, index)
+        data_balance[0].data.push(balance)
+        data_balance[1].data.push(parseFloat(balance_without_added))
+        data_gains[0].data.push(win)
+        data_gains[1].data.push(win_2)
+      })
+      const context =[{ctx: ctx_grow, datasets: data_balance}, {ctx: ctx_gains, datasets: data_gains}]
+      context.forEach((item)=>{
+        console.log(item)
+        new Chart(item.ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: item.datasets
+          }
+        })
+      })
+
+    })
+  </script>
+{% endblock inline_javascript %}
